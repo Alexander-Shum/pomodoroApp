@@ -8,7 +8,9 @@ import android.widget.TextView
 import androidx.fragment.app.Fragment
 import alex.shum.pomdoro.R
 import alex.shum.pomdoro.util.PrefUtil
+import alex.shum.pomdoro.util.Util
 import android.annotation.SuppressLint
+import android.app.AlertDialog
 import android.os.CountDownTimer
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 
@@ -18,7 +20,8 @@ class PomodoroFragment : Fragment() {
         Stopped, Paused, Running
     }
 
-    private lateinit var timerPomodoro: CountDownTimer
+    private var timerBreak: CountDownTimer? = null
+    private var timerPomodoro: CountDownTimer? = null
     private var timerLengthSeconds = 0L
     private var timerState = TimerState.Stopped
     private var secondRemaining = 0L
@@ -29,7 +32,7 @@ class PomodoroFragment : Fragment() {
     lateinit var fab_start: FloatingActionButton
     lateinit var fab_pause: FloatingActionButton
     lateinit var fab_stop: FloatingActionButton
-
+    var isBreak = false
 
     @SuppressLint("ResourceAsColor")
     override fun onCreateView(
@@ -47,24 +50,73 @@ class PomodoroFragment : Fragment() {
         fab_stop = root.findViewById(R.id.fab_stop)
 
         //init start conf
-        buttonPomodoro.setBackgroundColor(R.color.purple_500)
-        buttonBreak.setBackgroundColor(R.color.black)
+        initButtons(0)
+//        buttonPomodoro.isEnabled = false
+//        buttonBreak.isEnabled = true
+
+        val alertDialog = AlertDialog.Builder(requireContext())
+        alertDialog.setMessage("Are you want stopped timer?")
+
+        buttonPomodoro.setOnClickListener {
+            alertDialog.setPositiveButton("Yes") { dialog, which ->
+                isBreak = false
+
+                timerBreak?.cancel()
+
+                onTimerFinished(0)
+                initButtons(0)
+//                buttonPomodoro.isEnabled = false
+//                buttonBreak.isEnabled = true
+            }
+
+            alertDialog.setNegativeButton("No") { dialog, which ->
+                dialog.dismiss()
+            }
+            alertDialog.show()
+        }
+
+        buttonBreak.setOnClickListener {
+            alertDialog.setPositiveButton("Yes") { dialog, which ->
+                isBreak = true
+
+                timerPomodoro?.cancel()
+
+                onTimerFinished(0)
+                initButtons(1)
+//                buttonPomodoro.isEnabled = true
+//                buttonBreak.isEnabled = false
+            }
+
+            alertDialog.setNegativeButton("No") { dialog, which ->
+                dialog.dismiss()
+            }
+            alertDialog.show()
+        }
 
         fab_start.setOnClickListener {
-            startTimer()
+            if (isBreak)
+                onTimerBreak()
+            else
+                startTimer()
             timerState = TimerState.Running
             updateButtons()
         }
 
         fab_pause.setOnClickListener {
-            timerPomodoro.cancel()
+            if (isBreak)
+                timerBreak?.cancel()
+            else
+                timerPomodoro?.cancel()
             timerState = TimerState.Paused
             updateButtons()
         }
 
         fab_stop.setOnClickListener {
-            timerPomodoro.cancel()
-            onTimerFinished()
+            if (isBreak)
+                timerBreak?.cancel()
+            else
+                timerPomodoro?.cancel()
+            onTimerFinished(0)
         }
 
         return root
@@ -78,7 +130,10 @@ class PomodoroFragment : Fragment() {
     override fun onPause() {
         super.onPause()
         if (timerState == TimerState.Running) {
-            timerPomodoro.cancel()
+            if (isBreak)
+                timerBreak?.cancel()
+            else
+                timerPomodoro?.cancel()
         } else if (timerState == TimerState.Paused) {
 
         }
@@ -91,7 +146,10 @@ class PomodoroFragment : Fragment() {
     private fun initTimer() {
         timerState = PrefUtil.getTimerState(requireContext())
         if (timerState == TimerState.Stopped)
-            setNewTimerLenght()
+            if (isBreak)
+                onTimerBreak()
+            else
+                setNewTimerLenght()
         else
             setPreviousTimerLenght()
 
@@ -101,17 +159,26 @@ class PomodoroFragment : Fragment() {
             timerLengthSeconds
 
         if (secondRemaining <= 0)
-            onTimerFinished()
+            onTimerFinished(0)
         else if (timerState == TimerState.Running)
-            startTimer()
+            if (isBreak)
+                onTimerBreak()
+            else
+                startTimer()
         updateButtons()
         updateCountDawnUI()
     }
 
-    private fun onTimerFinished() {
-        timerState = TimerState.Stopped
+    private fun onTimerFinished(count: Int) {
+        if (count == 0)
+            timerState = TimerState.Stopped
+        else if (count == 1)
+            timerState = TimerState.Running
 
-        setNewTimerLenght()
+        if (isBreak)
+            setTimeBreak()
+        else
+            setNewTimerLenght()
 
         PrefUtil.setSecondsRemaining(timerLengthSeconds, requireContext())
         secondRemaining = timerLengthSeconds
@@ -120,17 +187,41 @@ class PomodoroFragment : Fragment() {
         updateCountDawnUI()
     }
 
-    private fun onTimerBreak(){
+    private fun onTimerBreak() {
         timerState = TimerState.Running
+
+        timerBreak = object : CountDownTimer(secondRemaining * 1000, 1000) {
+            @SuppressLint("ResourceAsColor")
+            override fun onFinish() {
+                initButtons(0)
+                isBreak = false
+
+                onTimerFinished(1)
+                startTimer()
+            }
+
+            override fun onTick(millisUntilFinished: Long) {
+                secondRemaining = millisUntilFinished / 1000
+                updateCountDawnUI()
+            }
+
+        }.start()
     }
 
     private fun startTimer() {
         timerState = TimerState.Running
 
-        timerPomodoro = object : CountDownTimer(secondRemaining*100, 1000) {
+        timerPomodoro = object : CountDownTimer(secondRemaining * 1000, 1000) {
+            @SuppressLint("ResourceAsColor")
             override fun onFinish() {
-                timerPomodoro.cancel()
-                onTimerFinished()
+                timerPomodoro?.cancel()
+                initButtons(1)
+                isBreak = true
+                setTimeBreak()
+
+                PrefUtil.setSecondsRemaining(timerLengthSeconds, requireContext())
+                secondRemaining = timerLengthSeconds
+                onTimerBreak()
             }
 
             override fun onTick(millisUntilFinished: Long) {
@@ -142,6 +233,11 @@ class PomodoroFragment : Fragment() {
 
     private fun setNewTimerLenght() {
         val lenghtInMinutes = PrefUtil.getTimerLength25(requireContext())
+        timerLengthSeconds = (lenghtInMinutes * 60L)
+    }
+
+    private fun setTimeBreak() {
+        val lenghtInMinutes = PrefUtil.getTimerLength5(requireContext())
         timerLengthSeconds = (lenghtInMinutes * 60L)
     }
 
@@ -159,9 +255,9 @@ class PomodoroFragment : Fragment() {
         else "0" + secondStr}"
     }
 
-    private fun updateButtons(){
+    private fun updateButtons() {
         when (timerState) {
-            TimerState.Running ->{
+            TimerState.Running -> {
                 fab_start.isEnabled = false
                 fab_pause.isEnabled = true
                 fab_stop.isEnabled = true
@@ -176,6 +272,17 @@ class PomodoroFragment : Fragment() {
                 fab_pause.isEnabled = false
                 fab_stop.isEnabled = true
             }
+        }
+    }
+
+    @SuppressLint("ResourceAsColor")
+    private fun initButtons(count: Int) {
+        if (count == 0) {
+            Util.selectedButton(buttonPomodoro, requireContext())
+            Util.unselectedButton(buttonBreak, requireContext())
+        } else if (count == 1) {
+            Util.selectedButton(buttonBreak, requireContext())
+            Util.unselectedButton(buttonPomodoro, requireContext())
         }
     }
 }

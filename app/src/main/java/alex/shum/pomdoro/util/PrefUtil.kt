@@ -8,7 +8,11 @@ class PrefUtil {
     companion object{
 
         fun getTimerLength25(context: Context): Int{
-            return 1
+            return 25
+        }
+
+        fun getTimerLength5(context: Context): Int{
+            return 5
         }
 
 
