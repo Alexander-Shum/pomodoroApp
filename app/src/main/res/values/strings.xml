@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Pomodoro</string>
+    <string name="app_name">PomodoroTimer</string>
     <string name="title_pomodoro">Pomodoro</string>
     <string name="title_statistic">Statistics</string>
     <string name="title_break">Break</string>

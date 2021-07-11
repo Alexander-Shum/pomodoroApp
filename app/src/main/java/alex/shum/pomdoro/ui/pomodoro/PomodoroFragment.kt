@@ -1,18 +1,23 @@
 package alex.shum.pomdoro.ui.pomodoro
 
-import android.os.Bundle
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
-import android.widget.TextView
-import androidx.fragment.app.Fragment
 import alex.shum.pomdoro.R
 import alex.shum.pomdoro.util.PrefUtil
 import alex.shum.pomdoro.util.Util
 import android.annotation.SuppressLint
 import android.app.AlertDialog
+import android.os.Bundle
 import android.os.CountDownTimer
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import android.widget.EditText
+import android.widget.LinearLayout
+import android.widget.TextView
+import androidx.fragment.app.Fragment
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.floatingactionbutton.FloatingActionButton
+
 
 class PomodoroFragment : Fragment() {
 
@@ -26,13 +31,16 @@ class PomodoroFragment : Fragment() {
     private var timerState = TimerState.Stopped
     private var secondRemaining = 0L
 
+    lateinit var addTask: TextView
     lateinit var textTimer: TextView
     lateinit var buttonPomodoro: TextView
     lateinit var buttonBreak: TextView
     lateinit var fab_start: FloatingActionButton
     lateinit var fab_pause: FloatingActionButton
     lateinit var fab_stop: FloatingActionButton
+
     var isBreak = false
+    var arrayList: ArrayList<String> = ArrayList()
 
     @SuppressLint("ResourceAsColor")
     override fun onCreateView(
@@ -42,6 +50,7 @@ class PomodoroFragment : Fragment() {
     ): View? {
         val root = inflater.inflate(R.layout.fragment_pomodoro, container, false)
 
+        addTask = root.findViewById(R.id.addTask)
         buttonPomodoro = root.findViewById(R.id.buttonPomodoro)
         buttonBreak = root.findViewById(R.id.buttonBreak)
         textTimer = root.findViewById(R.id.timer)
@@ -49,15 +58,53 @@ class PomodoroFragment : Fragment() {
         fab_pause = root.findViewById(R.id.fab_pause)
         fab_stop = root.findViewById(R.id.fab_stop)
 
+        addTask.setOnClickListener {
+            val alertDialog = AlertDialog.Builder(requireContext())
+            alertDialog.setTitle("Task")
+
+            val input = EditText(requireContext())
+            input.hint = "What are you working on?"
+            val lp = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.MATCH_PARENT
+            )
+            input.setPadding(20, 10,20, 10)
+            input.layoutParams = lp
+            alertDialog.setView(input)
+
+            alertDialog.setPositiveButton("SAVE") { dialog, which ->
+                arrayList.add(input.text.toString())
+            }
+
+            alertDialog.setNegativeButton("CANCEL") { dialog, which ->
+
+            }
+
+            alertDialog.show()
+        }
+
+//        addTask.setOnEditorActionListener { _, actionId, _ ->
+//            if (actionId == EditorInfo.IME_ACTION_DONE) {
+//                arrayList.add(addTask.text.toString())
+//                addTask.text = ""
+//                addTask.isCursorVisible = false
+//                true
+//            }
+//            false
+//        }
+
+        val recyclerView: RecyclerView = root.findViewById(R.id.tasks)
+        recyclerView.layoutManager = LinearLayoutManager(requireContext())
+        recyclerView.adapter = Adapter(arrayList, requireContext())
+
         //init start conf
         initButtons(0)
-//        buttonPomodoro.isEnabled = false
-//        buttonBreak.isEnabled = true
 
         val alertDialog = AlertDialog.Builder(requireContext())
         alertDialog.setMessage("Are you want stopped timer?")
 
         buttonPomodoro.setOnClickListener {
+
             alertDialog.setPositiveButton("Yes") { dialog, which ->
                 isBreak = false
 
@@ -65,8 +112,6 @@ class PomodoroFragment : Fragment() {
 
                 onTimerFinished(0)
                 initButtons(0)
-//                buttonPomodoro.isEnabled = false
-//                buttonBreak.isEnabled = true
             }
 
             alertDialog.setNegativeButton("No") { dialog, which ->
@@ -83,8 +128,6 @@ class PomodoroFragment : Fragment() {
 
                 onTimerFinished(0)
                 initButtons(1)
-//                buttonPomodoro.isEnabled = true
-//                buttonBreak.isEnabled = false
             }
 
             alertDialog.setNegativeButton("No") { dialog, which ->

@@ -55,7 +55,7 @@
         android:layout_alignParentLeft="true"
         android:textStyle="bold"
         android:gravity="center"
-        android:textSize="150sp"
+        android:textSize="120sp"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"/>
 
@@ -117,27 +117,41 @@
         android:layout_alignParentLeft="true"
         android:layout_alignParentRight="true"/>
 
-    <ListView
+
+    <LinearLayout
+        android:id="@+id/linearText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:layout_below="@+id/timeToWork"
+        android:layout_centerHorizontal="true">
+
+        <ImageView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@drawable/ic_add_circle"/>
+
+        <TextView
+            android:id="@+id/addTask"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="18sp"
+            android:text="Add task"/>
+
+<!--        android:imeOptions="actionDone"-->
+<!--        android:inputType="text"-->
+
+    </LinearLayout>
+
+
+    <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/tasks"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_below="@id/timeToWork"/>
+        android:layout_height="match_parent"
+        android:layout_marginBottom="50dp"
+        android:layout_below="@id/linearText"/>
 
-    <TextView
-        android:id="@+id/addTask"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_below="@id/tasks"
-        android:textSize="18sp"
-        android:layout_centerHorizontal="true"
-        android:text="Add task"/>
 
-    <ImageView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_below="@id/tasks"
-        android:layout_toLeftOf="@+id/addTask"
-        android:background="@drawable/ic_add_circle"/>
 
 
 
