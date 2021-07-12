@@ -5,17 +5,15 @@ import alex.shum.pomdoro.util.PrefUtil
 import alex.shum.pomdoro.util.Util
 import android.annotation.SuppressLint
 import android.app.AlertDialog
+import android.graphics.Color
 import android.os.Bundle
 import android.os.CountDownTimer
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.EditText
-import android.widget.LinearLayout
-import android.widget.TextView
+import android.widget.*
+import androidx.core.view.get
 import androidx.fragment.app.Fragment
-import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 
 
@@ -25,6 +23,7 @@ class PomodoroFragment : Fragment() {
         Stopped, Paused, Running
     }
 
+    lateinit var adapter: ArrayAdapter<String>
     private var timerBreak: CountDownTimer? = null
     private var timerPomodoro: CountDownTimer? = null
     private var timerLengthSeconds = 0L
@@ -50,6 +49,8 @@ class PomodoroFragment : Fragment() {
     ): View? {
         val root = inflater.inflate(R.layout.fragment_pomodoro, container, false)
 
+        val listTask: ListView = root.findViewById(R.id.tasks)
+        val task: TextView = root.findViewById(R.id.timeToWork)
         addTask = root.findViewById(R.id.addTask)
         buttonPomodoro = root.findViewById(R.id.buttonPomodoro)
         buttonBreak = root.findViewById(R.id.buttonBreak)
@@ -68,34 +69,49 @@ class PomodoroFragment : Fragment() {
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.MATCH_PARENT
             )
-            input.setPadding(20, 10,20, 10)
+            input.setPadding(20, 10, 20, 10)
             input.layoutParams = lp
             alertDialog.setView(input)
 
             alertDialog.setPositiveButton("SAVE") { dialog, which ->
                 arrayList.add(input.text.toString())
+
+                listTask.adapter = MyListAdapter(requireContext(), R.layout.task_item, arrayList)
+
+                listTask.setOnItemClickListener { parent, view, position, id ->
+                    val item: String = adapter.getItemId(position).toString()
+                    Toast.makeText(requireContext(), "Selected : " + item, Toast.LENGTH_SHORT)
+                        .show()
+
+                    for (i in 0 until listTask.childCount) {
+                        if (position === i) {
+                            listTask.getChildAt(i).setBackgroundColor(R.color.black)
+                            task.text = arrayList[i]
+                        } else {
+                            listTask.getChildAt(i).setBackgroundColor(Color.TRANSPARENT)
+                        }
+                    }
+
+                }
             }
 
-            alertDialog.setNegativeButton("CANCEL") { dialog, which ->
 
+
+            alertDialog.setNegativeButton("CANCEL") { dialog, which ->
+                dialog.dismiss()
             }
 
             alertDialog.show()
         }
 
-//        addTask.setOnEditorActionListener { _, actionId, _ ->
-//            if (actionId == EditorInfo.IME_ACTION_DONE) {
-//                arrayList.add(addTask.text.toString())
-//                addTask.text = ""
-//                addTask.isCursorVisible = false
-//                true
-//            }
-//            false
-//        }
+        adapter = ArrayAdapter<String>(
+            requireContext(),
+            android.R.layout.simple_list_item_1,
+            arrayList
+        )
 
-        val recyclerView: RecyclerView = root.findViewById(R.id.tasks)
-        recyclerView.layoutManager = LinearLayoutManager(requireContext())
-        recyclerView.adapter = Adapter(arrayList, requireContext())
+
+
 
         //init start conf
         initButtons(0)
