@@ -12,7 +12,6 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.*
-import androidx.core.view.get
 import androidx.fragment.app.Fragment
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 
@@ -29,6 +28,7 @@ class PomodoroFragment : Fragment() {
     private var timerLengthSeconds = 0L
     private var timerState = TimerState.Stopped
     private var secondRemaining = 0L
+
 
     lateinit var addTask: TextView
     lateinit var textTimer: TextView
@@ -50,7 +50,7 @@ class PomodoroFragment : Fragment() {
         val root = inflater.inflate(R.layout.fragment_pomodoro, container, false)
 
         val listTask: ListView = root.findViewById(R.id.tasks)
-        val task: TextView = root.findViewById(R.id.timeToWork)
+        var textState: TextView = root.findViewById(R.id.timeToWork)
         addTask = root.findViewById(R.id.addTask)
         buttonPomodoro = root.findViewById(R.id.buttonPomodoro)
         buttonBreak = root.findViewById(R.id.buttonBreak)
@@ -76,7 +76,8 @@ class PomodoroFragment : Fragment() {
             alertDialog.setPositiveButton("SAVE") { dialog, which ->
                 arrayList.add(input.text.toString())
 
-                listTask.adapter = MyListAdapter(requireContext(), R.layout.task_item, arrayList)
+                listTask.adapter =
+                    MyListAdapter(requireContext(), R.layout.task_item, arrayList, textState)
 
                 listTask.setOnItemClickListener { parent, view, position, id ->
                     val item: String = adapter.getItemId(position).toString()
@@ -86,7 +87,7 @@ class PomodoroFragment : Fragment() {
                     for (i in 0 until listTask.childCount) {
                         if (position === i) {
                             listTask.getChildAt(i).setBackgroundColor(R.color.black)
-                            task.text = arrayList[i]
+                            textState.text = ("\"${arrayList[i]}\"")
                         } else {
                             listTask.getChildAt(i).setBackgroundColor(Color.TRANSPARENT)
                         }
@@ -102,6 +103,8 @@ class PomodoroFragment : Fragment() {
             }
 
             alertDialog.show()
+
+
         }
 
         adapter = ArrayAdapter<String>(
@@ -109,8 +112,6 @@ class PomodoroFragment : Fragment() {
             android.R.layout.simple_list_item_1,
             arrayList
         )
-
-
 
 
         //init start conf
@@ -181,9 +182,11 @@ class PomodoroFragment : Fragment() {
         return root
     }
 
+
     override fun onResume() {
         super.onResume()
         initTimer()
+
     }
 
     override fun onPause() {

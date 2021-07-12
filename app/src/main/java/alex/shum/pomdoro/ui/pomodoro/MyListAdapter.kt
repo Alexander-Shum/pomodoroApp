@@ -1,16 +1,16 @@
 package alex.shum.pomdoro.ui.pomodoro
 
 import alex.shum.pomdoro.R
-import alex.shum.pomdoro.R.string.app_name
-import android.app.Activity
 import android.content.Context
+import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.*
-import androidx.appcompat.widget.AppCompatTextView
+import android.widget.ArrayAdapter
+import android.widget.ImageView
+import android.widget.TextView
 
-class MyListAdapter(context: Context, var resource: Int, var items: List<String>) :
+class MyListAdapter(context: Context, var resource: Int, var items: List<String>, var textState: TextView) :
     ArrayAdapter<String>(context, resource, items) {
 
 
@@ -22,6 +22,10 @@ class MyListAdapter(context: Context, var resource: Int, var items: List<String>
         val imageView: ImageView = view.findViewById(R.id.buttonDelete)
         var textView: TextView = view.findViewById(R.id.task)
 
+        imageView.setOnClickListener {
+            remove(items[position])
+            textState.text = "Time to work!"
+        }
 
 
         var task: String = items[position]
